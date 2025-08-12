@@ -1,0 +1,25 @@
+# FastAPI y servidor
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+
+# Base de datos y ORM (solo para conversaciones)
+sqlalchemy==2.0.36
+
+# IA y Machine Learning
+openai>=1.58.1
+
+# LangChain core
+langchain-core==0.3.28
+langchain-openai==0.2.14
+
+# Utilidades básicas
+python-dotenv==1.0.1
+pydantic==2.10.3
+pydantic-settings==2.7.0
+
+# Logging
+loguru==0.7.3
+
+# Herramientas de desarrollo
+jinja2==3.1.5
