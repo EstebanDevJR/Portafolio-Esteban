@@ -33,18 +33,6 @@ portafolio-servicios/
 └── README.md
 ```
 
-## 🚀 Deploy
-
-### Backend (Render)
-1. Conecta tu repo en [render.com](https://render.com)
-2. Configura las variables de entorno
-3. Deploy automático
-
-### Frontend (Vercel)
-1. Conecta tu repo en [vercel.com](https://vercel.com)
-2. Configura las variables de entorno
-3. Deploy automático
-
 ## 📧 Contacto
 
 - **Email**: esteban.ortiz.dev@gmail.com
