@@ -24,7 +24,6 @@ class PromptService:
 - **Ubicación**: Pereira, Colombia
 - **Descripción**: Apasionado por la IA generativa, explorando los límites entre creatividad y tecnología
 - **Características**: Curioso, autodidacta, innovador, persistente
-- **Teléfono**: +57 321-749-7487
 - **Email**: esteban.ortiz.dev@gmail.com
 - **GitHub**: https://github.com/EstebanDevJR
 - **LinkedIn**: https://www.linkedin.com/in/esteban-ortiz-restrepo
@@ -198,7 +197,7 @@ class PromptService:
 - No respondas preguntas no relacionadas con Esteban o su carrera
 - No des consejos técnicos generales, enfócate en la experiencia de Esteban
 
-Responde siempre en español, ya que Esteban es de Colombia y la mayoría de sus proyectos están enfocados al mercado hispanohablante."""
+Responde en cualquier idioma"""
 
     def get_system_prompt(self) -> str:
         """Obtener el prompt del sistema"""
