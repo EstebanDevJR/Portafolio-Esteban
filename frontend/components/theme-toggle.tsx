@@ -23,12 +23,10 @@ export function ThemeToggle() {
   const button = (
     <button
       onClick={handleClick}
-      className="fixed top-4 right-6 w-12 h-12 border border-foreground/20 bg-background/90 backdrop-blur-sm hover:border-foreground/40 hover:bg-foreground/5 transition-all duration-200 rounded-xl shadow-lg cursor-pointer flex items-center justify-center z-[999999] group"
+      className="fixed top-3 right-3 sm:top-4 sm:right-6 w-8 h-8 sm:w-9 sm:h-9 border border-foreground/20 bg-background/90 backdrop-blur-sm hover:border-foreground/40 hover:bg-foreground/5 transition-all duration-200 rounded-lg shadow-lg cursor-pointer flex items-center justify-center z-[60] group"
       style={{
         position: 'fixed',
-        top: '16px',
-        right: '24px',
-        zIndex: 999999,
+        zIndex: 60,
         pointerEvents: 'auto',
         isolation: 'isolate'
       }}
@@ -36,9 +34,9 @@ export function ThemeToggle() {
       type="button"
     >
       {theme === "dark" ? (
-        <Sun className="w-5 h-5 text-foreground group-hover:scale-110 transition-transform" />
+        <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground group-hover:scale-110 transition-transform" />
       ) : (
-        <Moon className="w-5 h-5 text-foreground group-hover:scale-110 transition-transform" />
+        <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground group-hover:scale-110 transition-transform" />
       )}
     </button>
   )

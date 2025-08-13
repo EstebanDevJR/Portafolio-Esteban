@@ -18,7 +18,7 @@ export function PromptInput({ currentPrompt, isGenerating }: PromptInputProps) {
   const labelText = isStatusMessage ? "Esteban.AI:" : "PROMPT:"
 
   return (
-    <div className="fixed top-4 left-4 right-4 z-20 sm:top-6 sm:left-8 sm:right-8 md:top-8 lg:top-12 xl:top-16">
+    <div className="fixed top-20 left-4 right-4 z-20 sm:top-6 sm:left-8 sm:right-8 md:top-8 lg:top-12 xl:top-16">
       <div className="max-w-2xl mx-auto">
         <div className="bg-background/80 backdrop-blur-sm border border-foreground/20 p-3 sm:p-4 rounded-xl shadow-lg">
           <div className="flex items-center gap-2 sm:gap-3">
