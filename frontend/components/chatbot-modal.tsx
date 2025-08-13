@@ -146,8 +146,8 @@ export function ChatbotModal({ isOpen, onClose }: ChatbotModalProps) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-60 flex items-center justify-center p-4">
-      <div className="bg-background border border-foreground/20 rounded-xl w-full max-w-2xl h-[600px] max-h-[90vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-60 flex items-center justify-center p-2 sm:p-4 md:p-6 lg:p-8">
+      <div className="bg-background border border-foreground/20 rounded-xl w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl h-[500px] sm:h-[550px] md:h-[600px] lg:h-[650px] xl:h-[700px] max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-foreground/20">
           <div className="flex items-center gap-3">
@@ -192,7 +192,7 @@ export function ChatbotModal({ isOpen, onClose }: ChatbotModalProps) {
                   )}
 
                   <div
-                    className={`max-w-[70%] p-3 rounded-lg text-sm break-words ${
+                    className={`max-w-[85%] sm:max-w-[75%] md:max-w-[70%] p-3 rounded-lg text-sm break-words ${
                       message.role === "user" ? "bg-foreground text-background ml-auto" : "bg-muted"
                     }`}
                   >
