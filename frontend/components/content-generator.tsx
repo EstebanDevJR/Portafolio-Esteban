@@ -76,7 +76,7 @@ export function ContentGenerator({ content, isGenerating }: ContentGeneratorProp
   }
 
   return (
-    <div className="container mx-auto px-4 pt-20 pb-8 space-y-16">
+    <div className="container mx-auto px-4 pt-24 sm:pt-28 md:pt-32 lg:pt-36 xl:pt-40 pb-8 space-y-16">
       {["about", "skills", "projects", "experience", "contact"].map(renderSection)}
     </div>
   )
