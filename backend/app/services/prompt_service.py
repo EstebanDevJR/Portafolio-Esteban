@@ -1,17 +1,81 @@
 """
-Servicio de prompts para el chatbot de portafolio
+Servicio de prompts optimizado para el chatbot de portafolio usando LangChain
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 from datetime import datetime
+from langchain_core.prompts import (
+    ChatPromptTemplate, 
+    HumanMessagePromptTemplate,
+    SystemMessagePromptTemplate,
+    MessagesPlaceholder,
+    FewShotChatMessagePromptTemplate
+)
+from langchain_core.output_parsers import StrOutputParser, PydanticOutputParser
+from langchain_core.example_selectors import SemanticSimilarityExampleSelector
+from langchain_openai import OpenAIEmbeddings
+from pydantic import BaseModel, Field
+import os
 
+# Modelos para respuestas estructuradas
+class ProjectInfo(BaseModel):
+    """Información estructurada de un proyecto"""
+    name: str = Field(description="Nombre del proyecto")
+    description: str = Field(description="Descripción del proyecto")
+    technologies: List[str] = Field(description="Tecnologías utilizadas")
+    status: str = Field(description="Estado actual del proyecto")
+    progress_percentage: Optional[int] = Field(description="Porcentaje de progreso")
+
+class SkillAssessment(BaseModel):
+    """Evaluación de habilidades"""
+    skill: str = Field(description="Nombre de la habilidad")
+    level: str = Field(description="Nivel de la habilidad")
+    experience_months: Optional[int] = Field(description="Meses de experiencia")
+    description: str = Field(description="Descripción de la experiencia")
+
+class ContactResponse(BaseModel):
+    """Respuesta de contacto estructurada"""
+    message: str = Field(description="Mensaje de respuesta")
+    email: str = Field(description="Email de contacto")
+    github: Optional[str] = Field(description="URL de GitHub")
+    linkedin: Optional[str] = Field(description="URL de LinkedIn")
 
 class PromptService:
-    """Servicio para generar prompts contextualizados"""
+    """Servicio optimizado para generar prompts contextualizados con LangChain"""
     
     def __init__(self):
         self.knowledge_base = self._load_knowledge_base()
-        self.system_prompt = self._create_system_prompt()
+        
+        # Configurar embeddings para few-shot examples
+        self._setup_embeddings()
+        
+        # Output parsers (inicializar primero)
+        self.project_parser = PydanticOutputParser(pydantic_object=ProjectInfo)
+        self.skill_parser = PydanticOutputParser(pydantic_object=SkillAssessment)
+        self.contact_parser = PydanticOutputParser(pydantic_object=ContactResponse)
+        
+        # Crear templates de prompts optimizados (después de los parsers)
+        self.chat_template = self._create_chat_template()
+        self.project_template = self._create_project_template()
+        self.skills_template = self._create_skills_template()
+        self.contact_template = self._create_contact_template()
+        
+        # Configurar few-shot examples
+        self.few_shot_examples = self._create_few_shot_examples()
+        self.example_selector = self._create_example_selector()
+        
+    def _setup_embeddings(self):
+        """Configurar embeddings para selección de ejemplos"""
+        try:
+            api_key = os.getenv("OPENAI_API_KEY")
+            if api_key:
+                self.embeddings = OpenAIEmbeddings(api_key=api_key)
+            else:
+                self.embeddings = None
+                print("Warning: OpenAI API key not found, few-shot examples disabled")
+        except Exception as e:
+            print(f"Warning: Could not initialize embeddings: {e}")
+            self.embeddings = None
     
     def _load_knowledge_base(self) -> str:
         """Cargar toda la información del portafolio"""
@@ -156,73 +220,273 @@ class PromptService:
 - Enfoque en proyectos que combinen innovación técnica con aplicabilidad práctica
 """
     
-    def _create_system_prompt(self) -> str:
-        """Crear el prompt del sistema"""
-        return f"""Eres un asistente de IA especializado en representar a Esteban Ortiz, un Junior AI Developer de Pereira, Colombia. Tu función es responder preguntas sobre su perfil profesional, proyectos, habilidades y experiencia de manera natural y conversacional.
+    def _create_chat_template(self) -> ChatPromptTemplate:
+        """Crear template principal de chat optimizado"""
+        system_template = f"""Eres un asistente de IA especializado en representar a Esteban Ortiz, un Junior AI Developer de Pereira, Colombia.
 
 ## INFORMACIÓN COMPLETA SOBRE ESTEBAN:
 {self.knowledge_base}
 
 ## INSTRUCCIONES DE COMPORTAMIENTO:
-
-### PERSONALIDAD
 - Sé amigable, profesional y entusiasta
-- Muestra la pasión de Esteban por la IA generativa y la tecnología
 - Refleja su personalidad: curioso, autodidacta, innovador y persistente
-- Mantén un tono conversacional pero profesional
-
-### RESPUESTAS
-- Responde SOLO con información que esté en la base de conocimientos
-- Si no sabes algo específico, di "No tengo esa información específica, pero puedo contarte sobre..."
-- Sé específico con tecnologías, tiempos de experiencia y detalles de proyectos
-- Menciona números concretos cuando los tengas (meses de experiencia, porcentajes de progreso)
-- **FORMATO MARKDOWN**: Usa ## para títulos, **negrita**, `código`, - listas, etc. para estructurar respuestas
-
-### ENFOQUE
-- Enfatiza la experiencia práctica y los proyectos reales
-- Destaca el enfoque en resolver problemas del mundo real
+- Responde SOLO con información de la base de conocimientos
+- Usa **FORMATO MARKDOWN** para estructurar respuestas
+- Enfatiza experiencia práctica y proyectos reales
 - Menciona el contexto colombiano/latinoamericano cuando sea relevante
-- Resalta la metodología de "aprender haciendo"
 
-### CONTACTO
-- Siempre ofrece formas de contacto al final de conversaciones sobre colaboraciones
+## CONTACTO (cuando sea relevante):
 - Email: esteban.ortiz.dev@gmail.com
 - GitHub: https://github.com/EstebanDevJR
 - LinkedIn: https://www.linkedin.com/in/esteban-ortiz-restrepo
-- Teléfono: No PROPORCIONAR
 
-### LO QUE NO DEBES HACER
-- No inventes información que no esté en la base de conocimientos
-- No exageres las habilidades o experiencia
-- No respondas preguntas no relacionadas con Esteban o su carrera
-- No des consejos técnicos generales, enfócate en la experiencia de Esteban
+Responde en el idioma del usuario."""
 
-Responde en cualquier idioma"""
+        return ChatPromptTemplate.from_messages([
+            ("system", system_template),
+            MessagesPlaceholder(variable_name="few_shot_examples", optional=True),
+            MessagesPlaceholder(variable_name="chat_history", optional=True),
+            ("human", "{input}")
+        ])
 
-    def get_system_prompt(self) -> str:
-        """Obtener el prompt del sistema"""
-        return self.system_prompt
+    def _create_project_template(self) -> ChatPromptTemplate:
+        """Template específico para consultas sobre proyectos"""
+        system_template = f"""Eres un experto en los proyectos de IA de Esteban Ortiz.
+
+{self.knowledge_base}
+
+Responde consultas sobre proyectos con información específica: nombre, descripción, tecnologías, estado y progreso.
+Usa el formato estructurado que se te solicite.
+
+{self.project_parser.get_format_instructions()}"""
+
+        return ChatPromptTemplate.from_messages([
+            ("system", system_template),
+            ("human", "Información sobre el proyecto: {project_query}")
+        ])
+
+    def _create_skills_template(self) -> ChatPromptTemplate:
+        """Template específico para consultas sobre habilidades"""
+        system_template = f"""Eres un evaluador de las habilidades técnicas de Esteban Ortiz.
+
+{self.knowledge_base}
+
+Evalúa y describe habilidades específicas con nivel, experiencia y detalles.
+
+{self.skill_parser.get_format_instructions()}"""
+
+        return ChatPromptTemplate.from_messages([
+            ("system", system_template),
+            ("human", "Evalúa la habilidad: {skill_query}")
+        ])
+
+    def _create_contact_template(self) -> ChatPromptTemplate:
+        """Template específico para información de contacto"""
+        system_template = f"""Eres el asistente de contacto de Esteban Ortiz.
+
+Información de contacto:
+- Email: esteban.ortiz.dev@gmail.com
+- GitHub: https://github.com/EstebanDevJR
+- LinkedIn: https://www.linkedin.com/in/esteban-ortiz-restrepo
+- Ubicación: Pereira, Colombia
+
+{self.contact_parser.get_format_instructions()}"""
+
+        return ChatPromptTemplate.from_messages([
+            ("system", system_template),
+            ("human", "Consulta de contacto: {contact_query}")
+        ])
+
+    def get_chat_template(self) -> ChatPromptTemplate:
+        """Obtener el template principal de chat"""
+        return self.chat_template
     
-    def get_contextualized_prompt(self, user_message: str, conversation_history: list = None) -> str:
-        """Generar prompt contextualizado para la conversación"""
+    def _create_few_shot_examples(self) -> List[Dict[str, str]]:
+        """Crear ejemplos few-shot para mejorar respuestas"""
+        return [
+            {
+                "input": "¿Qué proyectos has desarrollado?",
+                "output": """## Proyectos Principales de Esteban
+
+### 🤖 **LegalGPT** (En desarrollo - 50%)
+Asesor legal automatizado para PYMEs colombianas que automatiza la comprensión de contratos y leyes.
+- **Tecnologías**: Python, React, OpenAI, Fine-tuning, RAG, LangChain, Pinecone, FastAPI
+- **Impacto**: Democratizar acceso a asesoría legal para pequeñas empresas
+
+### 📄 **CV Analyzer** (Completado - 100%)
+Analizador inteligente de currículums con RAG y fine-tuning para análisis detallados.
+- **Tecnologías**: Python, Streamlit, OpenAI, LangChain, ChromaDB, AWS Textract
+- **Características**: Análisis completo, recomendaciones de trabajo, roadmaps profesionales
+
+### 🗂️ **DocumentAssistant-AI** (Completado - 100%)
+Asistente multimodal para análisis de documentos con síntesis de voz.
+- **Tecnologías**: Python, Gradio, LangChain, OpenAI, ElevenLabs, AWS Textract
+- **Características**: Multimodal, síntesis de voz, múltiples formatos (PDF, CSV, Excel)"""
+            },
+            {
+                "input": "¿Cuál es tu experiencia con Python?",
+                "output": """## Experiencia con Python
+
+**Nivel**: Intermedio  
+**Experiencia**: 8 meses  
+**Especialización**: IA/ML
+
+### Aplicaciones Principales:
+- **Desarrollo de IA**: OpenAI API, LangChain, Fine-tuning
+- **Procesamiento de datos**: Pandas, análisis de documentos
+- **APIs**: FastAPI para backends de chatbots
+- **Bases de datos vectoriales**: FAISS, ChromaDB, Pinecone
+
+### Proyectos donde lo uso:
+- LegalGPT (backend completo)
+- CV Analyzer (análisis y procesamiento)
+- DocumentAssistant-AI (pipeline multimodal)
+- ATS Inteligente (sistema multiagente)
+
+Mi enfoque es **"aprender haciendo"** - todos mis proyectos tienen aplicaciones reales."""
+            },
+            {
+                "input": "¿Cómo puedo contactarte?",
+                "output": """## 📞 Información de Contacto
+
+¡Me encantaría colaborar contigo! Aquí tienes mis canales de contacto:
+
+**📧 Email**: esteban.ortiz.dev@gmail.com  
+**💼 LinkedIn**: https://www.linkedin.com/in/esteban-ortiz-restrepo  
+**🔗 GitHub**: https://github.com/EstebanDevJR  
+**📍 Ubicación**: Pereira, Colombia
+
+### Disponible para:
+- Proyectos de IA generativa
+- Colaboraciones en desarrollo
+- Trabajo remoto y presencial
+- Consultas técnicas sobre mis proyectos
+
+¡No dudes en escribirme para discutir oportunidades!"""
+            }
+        ]
+
+    def _create_example_selector(self):
+        """Crear selector de ejemplos basado en similitud semántica"""
+        if not self.embeddings:
+            return None
+            
+        try:
+            from langchain_community.vectorstores import FAISS
+            
+            vectorstore = FAISS.from_texts(
+                [example["input"] for example in self.few_shot_examples],
+                self.embeddings,
+                metadatas=[{"output": example["output"]} for example in self.few_shot_examples]
+            )
+            
+            return SemanticSimilarityExampleSelector(
+                vectorstore=vectorstore,
+                k=1  # Seleccionar 1 ejemplo más relevante
+            )
+        except Exception as e:
+            print(f"Warning: Could not create example selector: {e}")
+            return None
+
+    def get_contextualized_prompt(self, user_message: str, conversation_history: list = None) -> Dict[str, Any]:
+        """Generar prompt contextualizado con few-shot examples"""
         
-        # Contexto de conversación
-        context = ""
+        # Seleccionar ejemplos relevantes
+        few_shot_examples = []
+        if self.example_selector:
+            try:
+                selected_examples = self.example_selector.select_examples({"input": user_message})
+                for example in selected_examples:
+                    few_shot_examples.extend([
+                        ("human", example["input"]),
+                        ("ai", example.get("output", ""))
+                    ])
+            except Exception as e:
+                print(f"Warning: Could not select examples: {e}")
+        
+        # Preparar historial de chat
+        chat_history = []
         if conversation_history:
-            context = "\n## HISTORIAL DE CONVERSACIÓN:\n"
             for msg in conversation_history[-5:]:  # Últimos 5 mensajes
-                role = "Usuario" if msg.get("role") == "user" else "Asistente"
-                context += f"{role}: {msg.get('content', '')}\n"
+                if msg.get("role") == "user":
+                    chat_history.append(("human", msg.get("content", "")))
+                elif msg.get("role") == "assistant":
+                    chat_history.append(("ai", msg.get("content", "")))
         
-        # Prompt final minimal para usar como mensaje del usuario en runnables
-        prompt = f"""
-{context}
-
-Usuario: {user_message}
-"""
-
-        return prompt
+        return {
+            "input": user_message,
+            "few_shot_examples": few_shot_examples,
+            "chat_history": chat_history
+        }
     
+    def get_project_info(self, project_query: str) -> ProjectInfo:
+        """Obtener información estructurada de un proyecto específico"""
+        prompt = self.project_template.format(project_query=project_query)
+        # Este método sería usado con el LLM para generar respuesta estructurada
+        return self.project_parser
+    
+    def get_skill_assessment(self, skill_query: str) -> SkillAssessment:
+        """Obtener evaluación estructurada de una habilidad específica"""
+        prompt = self.skills_template.format(skill_query=skill_query)
+        # Este método sería usado con el LLM para generar respuesta estructurada
+        return self.skill_parser
+    
+    def get_contact_info(self, contact_query: str) -> ContactResponse:
+        """Obtener información de contacto estructurada"""
+        prompt = self.contact_template.format(contact_query=contact_query)
+        # Este método sería usado con el LLM para generar respuesta estructurada
+        return self.contact_parser
+    
+    def classify_query_intent(self, user_message: str) -> str:
+        """Clasificar la intención de la consulta del usuario"""
+        message_lower = user_message.lower()
+        
+        # Palabras clave para diferentes intenciones
+        project_keywords = ["proyecto", "project", "desarrollado", "built", "creado", "aplicación"]
+        skill_keywords = ["habilidad", "skill", "experiencia", "experience", "tecnología", "technology", "saber"]
+        contact_keywords = ["contacto", "contact", "email", "linkedin", "github", "colaborar", "collaborate"]
+        
+        # Clasificación simple basada en palabras clave
+        if any(keyword in message_lower for keyword in project_keywords):
+            return "projects"
+        elif any(keyword in message_lower for keyword in skill_keywords):
+            return "skills"
+        elif any(keyword in message_lower for keyword in contact_keywords):
+            return "contact"
+        else:
+            return "general"
+    
+    def get_optimized_prompt(self, user_message: str, conversation_history: list = None) -> Dict[str, Any]:
+        """Obtener prompt optimizado basado en la intención de la consulta"""
+        intent = self.classify_query_intent(user_message)
+        
+        if intent == "projects":
+            return {
+                "template": self.project_template,
+                "parser": self.project_parser,
+                "variables": {"project_query": user_message}
+            }
+        elif intent == "skills":
+            return {
+                "template": self.skills_template,
+                "parser": self.skill_parser,
+                "variables": {"skill_query": user_message}
+            }
+        elif intent == "contact":
+            return {
+                "template": self.contact_template,
+                "parser": self.contact_parser,
+                "variables": {"contact_query": user_message}
+            }
+        else:
+            # Usar template general con few-shot examples
+            variables = self.get_contextualized_prompt(user_message, conversation_history)
+            return {
+                "template": self.chat_template,
+                "parser": StrOutputParser(),
+                "variables": variables
+            }
+
     def get_knowledge_summary(self) -> Dict[str, Any]:
         """Obtener resumen de la base de conocimientos"""
         return {
@@ -239,7 +503,14 @@ Usuario: {user_message}
                 "fine_tuning": 5
             },
             "location": "Pereira, Colombia",
-            "status": "Available for collaboration"
+            "status": "Available for collaboration",
+            "features": [
+                "Few-shot prompting",
+                "Intent classification",
+                "Structured outputs",
+                "Semantic example selection",
+                "LangSmith integration"
+            ]
         }
 
 

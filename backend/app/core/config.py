@@ -20,10 +20,14 @@ class Settings(BaseSettings):
     # OpenAI
     OPENAI_API_KEY: str
     
-
+    # LangSmith
+    LANGCHAIN_TRACING_V2: bool = os.getenv("LANGCHAIN_TRACING_V2", "false").lower() == "true"
+    LANGCHAIN_API_KEY: str = os.getenv("LANGCHAIN_API_KEY", "")
+    LANGCHAIN_PROJECT: str = os.getenv("LANGCHAIN_PROJECT", "portfolio")
+    LANGCHAIN_ENDPOINT: str = os.getenv("LANGCHAIN_ENDPOINT", "https://api.smith.langchain.com")
     
     # Fine-tuning (modelo entrenado)
-    FINE_TUNING_MODEL: str = os.getenv("FINE_TUNING_MODEL")  # Actualizar con tu modelo fine-tuned
+    FINE_TUNING_MODEL: str = os.getenv("FINE_TUNING_MODEL", "gpt-4o-mini")  # Actualizar con tu modelo fine-tuned
     
     # CORS
     ALLOWED_ORIGINS: List[str] = [
