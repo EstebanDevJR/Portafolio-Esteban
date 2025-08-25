@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     LANGCHAIN_ENDPOINT: str = os.getenv("LANGCHAIN_ENDPOINT", "https://api.smith.langchain.com")
     
     # Fine-tuning (modelo entrenado)
-    FINE_TUNING_MODEL: str = os.getenv("FINE_TUNING_MODEL", "gpt-4o-mini")  # Actualizar con tu modelo fine-tuned
+    FINE_TUNING_MODEL: str = os.getenv("FINE_TUNING_MODEL", "ft:gpt-4o-mini-2024-07-18:curso-llm::C3nyJrmy")
     
     # CORS
     ALLOWED_ORIGINS: List[str] = [
