@@ -14,9 +14,6 @@ langchain-core==0.3.28
 langchain-openai==0.2.14
 langsmith>=0.1.125,<0.2.0
 
-# Vector stores para few-shot examples (deshabilitado para deployment)
-# faiss-cpu==1.9.0
-# langchain-community>=0.3.10
 
 # Utilidades básicas
 python-dotenv==1.0.1
